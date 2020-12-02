@@ -3,6 +3,8 @@ import java.io.InputStream
 fun main(args: Array<String>) {
     day1_1()
     day1_2()
+    day2_1()
+    day2_2()
 }
 
 fun getResourceAsText(path: String): InputStream {
@@ -27,4 +29,42 @@ fun day1_2() {
         .first { it.sum == 2020 }
     println("Answer for Day 1 part 2:" + (match))
     println(match.t1 * match.t2 * match.t3)
+}
+
+class Policy(val min: Int, val max: Int, val letter: Char) {
+    fun complies(password: String): Boolean {
+        val count = password.count { it == letter }
+        return count in min..max
+    }
+    fun compliesToboggan(password: String): Boolean {
+        val matchesFirst = password[min-1] == letter
+        val matchesSecond = password[max-1] == letter
+        return matchesFirst xor matchesSecond
+    }
+}
+
+fun createPolicy(policyStr:String ):Policy {
+    val match = Regex("(\\d+)-(\\d+) ([a-z])").find(policyStr)!!
+    val (min, max, letter) = match.destructured
+    return Policy(min.toInt(), max.toInt(), letter[0])
+}
+
+fun day2_1() {
+    val passwords = getResourceAsText("day2_input.txt").bufferedReader().readLines()
+        .map { it.split(":").toTypedArray() }
+        .map { parts -> Pair(createPolicy(parts[0]), parts[1].trim()) }
+        .filter { it.first.complies(it.second) }
+        .count()
+
+    println("Found unconforming password: " + passwords)
+}
+
+fun day2_2() {
+    val passwords = getResourceAsText("day2_input.txt").bufferedReader().readLines()
+        .map { it.split(":").toTypedArray() }
+        .map { parts -> Pair(createPolicy(parts[0]), parts[1].trim()) }
+        .filter { it.first.compliesToboggan(it.second) }
+        .count()
+
+    println("Found unconforming Toboggan password: " + passwords)
 }
