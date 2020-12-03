@@ -1,6 +1,4 @@
 import java.io.InputStream
-import java.math.BigDecimal
-import java.util.*
 
 fun main(args: Array<String>) {
     day1_1()
@@ -31,8 +29,7 @@ fun day1_2() {
         .flatMap { left -> expenses.map { right -> Pair(left, right) } }
         .flatMap { left -> expenses.map { right -> Addition(left.first, left.second, right, left.first + left.second + right) } }
         .first { it.sum == 2020 }
-    println("Answer for Day 1 part 2:" + (match))
-    println(match.t1 * match.t2 * match.t3)
+    println("Answer for Day 1 part 2: " + match.t1 * match.t2 * match.t3)
 }
 
 class Policy(val min: Int, val max: Int, val letter: Char) {
@@ -60,7 +57,7 @@ fun day2_1() {
         .filter { it.first.complies(it.second) }
         .count()
 
-    println("Found unconforming password: " + passwords)
+    println("Found nonconforming password: $passwords")
 }
 
 fun day2_2() {
@@ -70,7 +67,7 @@ fun day2_2() {
         .filter { it.first.compliesToboggan(it.second) }
         .count()
 
-    println("Found unconforming Toboggan password: " + passwords)
+    println("Found nonconforming Toboggan password: $passwords")
 }
 
 class Forest(val width: Int, val height: Int, val map: Array<CharArray>) {
@@ -100,9 +97,8 @@ fun createMap(rows: List<String>):Forest {
 
 fun day3_1() {
     val forest = createMap(getResourceAsText("day3_input.txt").bufferedReader().readLines())
-    var trees = forest.sled(3, 1)
+    val trees = forest.sled(3, 1)
     println("Day 3_1: Number of trees: $trees")
-
 }
 
 fun day3_2() {
@@ -116,5 +112,5 @@ fun day3_2() {
             .map { it.toLong() }
     val trees = paths.reduce { acc, elem -> acc * elem }
 
-    println("Day 3_2: Number of trees: " + trees)
+    println("Day 3_2: Number of trees: $trees")
 }
