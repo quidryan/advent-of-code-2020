@@ -1,10 +1,14 @@
 import java.io.InputStream
+import java.math.BigDecimal
+import java.util.*
 
 fun main(args: Array<String>) {
     day1_1()
     day1_2()
     day2_1()
     day2_2()
+    day3_1()
+    day3_2()
 }
 
 fun getResourceAsText(path: String): InputStream {
@@ -67,4 +71,50 @@ fun day2_2() {
         .count()
 
     println("Found unconforming Toboggan password: " + passwords)
+}
+
+class Forest(val width: Int, val height: Int, val map: Array<CharArray>) {
+
+    fun isTree(row: Int, col: Int): Boolean = map[row][col%width] == '#'
+
+    fun sled(colStep: Int, rowStep: Int): Int {
+        var row = 0
+        var col = 0
+        var trees = 0
+        while ( (row+rowStep) < height ) {
+            // right 3, down 1
+            row += rowStep
+            col += colStep
+            if (isTree(row, col)) {
+                trees++
+            }
+        }
+        return trees
+    }
+}
+
+fun createMap(rows: List<String>):Forest {
+    val map = rows.map { it.toCharArray() }.toTypedArray()
+    return Forest(map[0].size, map.size, map)
+}
+
+fun day3_1() {
+    val forest = createMap(getResourceAsText("day3_input.txt").bufferedReader().readLines())
+    var trees = forest.sled(3, 1)
+    println("Day 3_1: Number of trees: $trees")
+
+}
+
+fun day3_2() {
+    val forest = createMap(getResourceAsText("day3_input.txt").bufferedReader().readLines())
+    val paths =
+        listOf(forest.sled(1, 1),
+                forest.sled(3, 1),
+                forest.sled(5, 1),
+                forest.sled(7, 1),
+                forest.sled(1, 2))
+            .map { it.toLong() }
+    val trees = paths.reduce { acc, elem -> acc * elem }
+
+    println("Day 3_2: Number of trees: " + trees)
 }
