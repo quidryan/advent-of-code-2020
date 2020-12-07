@@ -9,6 +9,12 @@ fun main(args: Array<String>) {
     day3_2()
     day4_1()
     day4_2()
+    day5_1()
+    day5_2()
+    day6_1()
+    day6_2()
+    day7_1()
+    day7_2()
 }
 
 fun getResourceAsText(path: String): InputStream {
@@ -246,4 +252,154 @@ fun day4_2() {
     val valid = passports.filter { it.isValid() }
 
     println("Valid passports part 2: ${valid.size}")
+}
+
+data class Seat(val row: Int, val col: Int) {
+    fun id(): Int = row * 8 + col
+}
+
+fun toRow(rowStr: String) : Int {
+    return rowStr.substring(0..6).fold(0, { acc, letter ->
+        (acc shl 1) or if (letter=='F') 0 else 1
+    })
+}
+fun toCol(colStr: String) : Int {
+    return colStr.substring(7..9).fold(0, { acc, letter ->
+        (acc shl 1) or if (letter=='L') 0 else 1
+    })
+}
+
+fun day5_1() {
+    val progress = getResourceAsText("day5_input.txt").bufferedReader().readLines()
+        .map { Seat( toRow(it), toCol(it)) }
+
+    val max = progress
+        .maxByOrNull { it.id() }
+
+    println ("Maximum seat id is $max with id of ${max?.id()}")
+}
+
+fun day5_2() {
+    val progress = getResourceAsText("day5_input.txt").bufferedReader().readLines()
+        .map { Seat( toRow(it), toCol(it)) }
+
+    val neighbor = progress
+        .sortedBy { it.id() }
+        .zipWithNext()
+        .find { it.first.id() + 2 == it.second.id() }!!
+
+    val myseat = neighbor.first.id()+1
+    println ("My seat is next to ${neighbor.first} and ${neighbor.second}, my seat id is $myseat")
+}
+
+fun day6_1() {
+    val initial = Pair(0, setOf<Char>())
+    val progress = getResourceAsText("day6_input.txt").bufferedReader().readLines()
+        .fold(initial, { acc, line ->
+            if (line != "") {
+                Pair(acc.first, acc.second + line.toCharArray().asIterable())
+            } else {
+                // We have survey answers
+                Pair(acc.first + acc.second.size, emptySet())
+            }
+        })
+    val count = progress.first + progress.second.size
+    println("The sum of the survey count is ${count}")
+
+}
+
+fun day6_2() {
+    val initial = Pair<Int,Set<Char>?>(0, null)
+    val progress = getResourceAsText("day6_input.txt").bufferedReader().readLines()
+        .fold(initial, { acc, line ->
+            if (line != "") {
+                val newAnswers = line.toCharArray().toSet()
+                val intersection = if(acc.second == null) newAnswers else { acc.second!! intersect newAnswers }
+                Pair(acc.first, intersection)
+            } else {
+                // We have survey answers
+                Pair(acc.first + if(acc.second==null) 0 else acc.second!!.size, null)
+            }
+        })
+    val count = progress.first + if(progress.second==null) 0 else progress.second!!.size
+    println("The sum of the survey count with unique answers is ${count}")
+
+}
+
+data class Rule(val quantity: Int, val color:String, val bags: List<Rule>)
+
+fun day7_1() {
+    val rules = loadRules("day7_input.txt")
+    val map = reverseIndexRules(rules)
+
+    // Search
+    var candidates = mutableListOf("shiny gold")
+    val matches = mutableSetOf<String>()
+    while(candidates.isNotEmpty()) {
+        //println("Found $matches, searching $candidates")
+        val nextCandidates = mutableListOf<String>()
+        candidates.forEach { candidate ->
+                val holders = map[candidate]?.map { it.color }
+                holders?.forEach {
+                    matches.add(it)
+                    nextCandidates.add(it)
+                }
+            }
+        candidates = nextCandidates;
+    }
+    println("The number of rules that could apply is ${matches.size}")
+}
+
+fun day7_2() {
+    val rules = loadRules("day7_input.txt")
+    val map = indexRules(rules)
+
+    val bagCount = countBags("shiny gold", map)
+
+    println("The number of rules that could apply is ${bagCount}")
+}
+
+private fun countBags(bagColor:String, map: Map<String, Rule>) : Int {
+    val (_, _, bags) = map[bagColor]!!
+    return bags
+        .map { it.quantity + it.quantity * countBags(it.color, map) }
+        .sum()
+}
+
+private fun reverseIndexRules(rules: List<Rule>): HashMap<String, MutableSet<Rule>> {
+    // Reverse Index
+    val map = HashMap<String, MutableSet<Rule>>()
+    rules.forEach { rule ->
+        rule.bags.forEach { bag ->
+            map.getOrPut(bag.color) { mutableSetOf() }.add(rule)
+        }
+    }
+    return map
+}
+
+private fun indexRules(rules: List<Rule>): Map<String, Rule> {
+    return rules.associateBy { it.color }
+}
+
+private fun loadRules(filename: String): List<Rule> {
+    val ruleFormat = Regex("(\\w+ \\w+) bags contain ((\\d \\w+ \\w+ bags?(?:, )?)+|no other bags).")
+    val destFormat = Regex("(\\d) (\\w+ \\w+) bags?(?:, )?")
+
+    val rules = getResourceAsText(filename).bufferedReader().readLines()
+        .map { line ->
+            val result = ruleFormat.matchEntire(line)!!
+            val groupValues = result.groupValues
+            val src = groupValues[1]
+            val dests = if (groupValues[2] == "no other bags") {
+                emptyList()
+            } else {
+                groupValues[2].split(",")
+                    .map { desc ->
+                        val (quantity, color) = destFormat.find(desc)!!.destructured
+                        Rule(quantity.toInt(), color, emptyList())
+                    }
+            }
+            Rule(1, src, dests)
+        }
+    return rules
 }
