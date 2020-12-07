@@ -333,21 +333,13 @@ fun day7_1() {
     val map = reverseIndexRules(rules)
 
     // Search
-    var candidates = mutableListOf("shiny gold")
-    val matches = mutableSetOf<String>()
-    while(candidates.isNotEmpty()) {
-        //println("Found $matches, searching $candidates")
-        val nextCandidates = mutableListOf<String>()
-        candidates.forEach { candidate ->
-                val holders = map[candidate]?.map { it.color }
-                holders?.forEach {
-                    matches.add(it)
-                    nextCandidates.add(it)
-                }
-            }
-        candidates = nextCandidates;
-    }
+    val matches = countMatches("shiny gold", map)
     println("The number of rules that could apply is ${matches.size}")
+}
+
+private fun countMatches(color: String, map: HashMap<String, MutableSet<Rule>>) : Set<Rule> {
+    return map.getOrDefault(color, mutableSetOf() )
+        .flatMap { rule -> setOf(rule) + countMatches(rule.color, map) }.toSet()
 }
 
 fun day7_2() {
