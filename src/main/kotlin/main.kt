@@ -1,20 +1,22 @@
 import java.io.InputStream
 
 fun main(args: Array<String>) {
-    day1_1()
-    day1_2()
-    day2_1()
-    day2_2()
-    day3_1()
-    day3_2()
-    day4_1()
-    day4_2()
-    day5_1()
-    day5_2()
-    day6_1()
-    day6_2()
-    day7_1()
-    day7_2()
+//    day1_1()
+//    day1_2()
+//    day2_1()
+//    day2_2()
+//    day3_1()
+//    day3_2()
+//    day4_1()
+//    day4_2()
+//    day5_1()
+//    day5_2()
+//    day6_1()
+//    day6_2()
+//    day7_1()
+//    day7_2()
+    day8_1()
+    day8_2()
 }
 
 fun getResourceAsText(path: String): InputStream {
@@ -394,4 +396,105 @@ private fun loadRules(filename: String): List<Rule> {
             Rule(1, src, dests)
         }
     return rules
+}
+
+data class Instruction(val operation:String, val argument:Int)
+
+fun day8_1() {
+    val instructions = loadInstructions("day8_input.txt")
+
+    var ip: Int = 0
+    var acc: Int = 0
+    val alreadyRun = mutableSetOf<Int>()
+    while(!alreadyRun.contains(ip)) {
+        val instruction = instructions[ip]
+        alreadyRun.add(ip)
+        when (instruction.operation) {
+            "acc" -> {
+                acc += instruction.argument
+                ip += 1
+            }
+            "jmp" -> {
+                ip += instruction.argument
+            }
+            "nop" -> {
+                ip += 1
+            }
+        }
+    }
+
+    println (" The last value in the accumulator was $acc")
+}
+
+enum class MachineState {
+    IllegalOperation, InfiniteLoop, Exited
+}
+
+fun day8_2() {
+    val instructions = loadInstructions("day8_input.txt")
+
+    val rowsToModify = instructions
+        .mapIndexed { index, instruction -> Pair(index, instruction)}
+        .filter { it.second.operation == "jmp" || it.second.operation == "nop" }
+        .map { it.first }
+        .toSet()
+
+    val acc = findRow(rowsToModify, instructions)
+    println ("After searching, the final acculator was $acc")
+}
+
+private fun findRow(
+    rowsToModify: Set<Int>,
+    instructions: List<Instruction>
+) : Int {
+    for (rowToChange in rowsToModify) {
+        val originalRow = instructions[rowToChange]
+        val newOperation = if (originalRow.operation == "jmp") "nop" else "jmp"
+        val newRow = Instruction(newOperation, originalRow.argument)
+        var (acc, state) = machine(instructions, rowToChange, newRow)
+        if (state == MachineState.Exited) {
+            // Successful swap
+            println("Successful swap at $rowToChange from $originalRow to $newRow")
+            return acc
+        }
+    }
+    throw IllegalStateException("Unable to find a row that would work")
+}
+
+private fun machine(instructions: List<Instruction>, rowToChange: Int, newRow: Instruction): Pair<Int, MachineState> {
+    val end = instructions.size
+    var ip: Int = 0
+    var acc: Int = 0
+    val alreadyRun = mutableSetOf<Int>()
+    while (!alreadyRun.contains(ip) && ip != end) {
+        if(ip>end) {
+            return Pair(acc, MachineState.IllegalOperation)
+        }
+        val instruction = if(ip == rowToChange) newRow else instructions[ip]
+        //println("$instruction | $acc, $ip")
+        alreadyRun.add(ip)
+        when (instruction.operation) {
+            "acc" -> {
+                acc += instruction.argument
+                ip += 1
+            }
+            "jmp" -> {
+                ip += instruction.argument
+            }
+            "nop" -> {
+                ip += 1
+            }
+        }
+    }
+
+    return Pair(acc, if(ip==end) MachineState.Exited else MachineState.InfiniteLoop)
+}
+
+private fun loadInstructions(filename: String): List<Instruction> {
+    val instructions = getResourceAsText(filename).bufferedReader().readLines()
+        .map { line ->
+            val (operation, sign, quantity) = Regex("(nop|acc|jmp) (\\-|\\+)(\\d+)").find(line)!!.destructured
+            Instruction(operation, argument = quantity.toInt() * if (sign == "-") -1 else 1)
+        }.toList()
+    return instructions
 }
