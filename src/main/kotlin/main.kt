@@ -15,8 +15,12 @@ fun main(args: Array<String>) {
 //    day6_2()
 //    day7_1()
 //    day7_2()
-    day8_1()
-    day8_2()
+//    day8_1()
+//    day8_2()
+//    day9_1()
+//    day9_2()
+    day10_1()
+    day10_2()
 }
 
 fun getResourceAsText(path: String): InputStream {
@@ -497,4 +501,139 @@ private fun loadInstructions(filename: String): List<Instruction> {
             Instruction(operation, argument = quantity.toInt() * if (sign == "-") -1 else 1)
         }.toList()
     return instructions
+}
+
+fun day9_1() {
+    val codes = getResourceAsText("day9_input.txt").bufferedReader().readLines()
+        .map { it.toLong() }
+
+    val invalidCode = findInvalidNumber(codes, 25)
+}
+
+private fun findInvalidNumber(codes: List<Long>, preambleGap: Int) : Long {
+    for (preambleEnd in preambleGap until codes.size) {
+        val preambleStart = preambleEnd - preambleGap
+        val preamble = codes.slice(preambleStart until preambleEnd)
+        val code = codes[preambleEnd]
+        //println("Need to test $code in $preamble")
+
+        // Test
+        val hasPair = combintorialPairs(preamble).map { it.first + it.second }.any { it == code }
+        if (!hasPair) {
+            //println("Unable to find a pair for $code in $preamble")
+            return code
+        }
+    }
+    throw IllegalStateException("Unable to find a broken code")
+}
+
+fun combintorialPairs(arr: List<Long>) : List<Pair<Long, Long>> {
+    val list= mutableListOf<Pair<Long, Long>>()
+
+    arr.indices.forEach() {
+            i -> arr.indices.minus(0..i).forEach() {
+            j -> list.add(arr[i] to arr[j]) }
+    }
+    return list
+}
+
+fun day9_2() {
+    val codes = getResourceAsText("day9_input.txt").bufferedReader().readLines()
+        .map { it.toLong() }
+
+    val invalidCode = findInvalidNumber(codes, 25)
+
+    val segment = findMatchingSegment(codes, invalidCode)
+
+    val min = segment.minOrNull()!!
+    val max = segment.maxOrNull()!!
+    val sum = min+max
+
+    println("Combination of $min and $max is $sum")
+}
+
+private fun findMatchingSegment(codes: List<Long>, invalidCode: Long) : List<Long> {
+    for (start in codes.indices) {
+        // Try bigger and bigger ranges to find a total that is equal to invalidCode
+        for (end in start + 1 until codes.size) {
+            val segment = codes.slice(start..end)
+            val segmentSum = segment.sum()
+            if (segmentSum == invalidCode) {
+                //println("Find a segment $segment for $invalidCode")
+                return segment
+            } else if (segmentSum > invalidCode) {
+                // We'll never find a sum, so move on
+                break
+            }
+        }
+    }
+    throw IllegalStateException("Unable to find segment for broken code")
+
+}
+
+fun day10_1() {
+    var adaptorCodes = getResourceAsText("day10_input.txt").bufferedReader().readLines()
+        .map { it.toInt() }
+
+    val max = adaptorCodes.maxOrNull()!! + 3
+
+    val codes = adaptorCodes + max
+
+    var jolts = 0;
+    val diffs = intArrayOf(0, 0, 0)
+    while(jolts < max) {
+        var found = false
+        for (diff in 1..3) {
+            val desired = jolts + diff
+            //println (" Looking for $desired from $jolts")
+            if(codes.contains(desired)) {
+                //println (" Found $desired")
+                diffs[diff-1] += 1
+                jolts = desired
+                found = true
+                break
+            }
+        }
+        if(!found) {
+            throw IllegalStateException("Unable to find a compatible adaptor")
+        }
+    }
+
+    println("Found ${diffs[0]} ${diffs[1]} ${diffs[2]}: " + diffs[0] * diffs[2])
+}
+
+private val cache: MutableMap<Int, Long> = mutableMapOf()
+
+fun possiblePaths(jolts: Int, endGoal: Int, codes: List<Int>, ) : Long {
+    if(jolts == endGoal) {
+        return 1L
+    }
+
+    // memoize the path-count for the current adapter
+    return cache.getOrPut(jolts) {
+        listOf(1, 2, 3)
+            .map { diff ->
+                val desired = jolts + diff
+                val indexOf = codes.indexOf(desired)
+                if (indexOf != -1) {
+                    possiblePaths(desired, endGoal, codes.slice(indexOf until codes.size))
+                } else {
+                    0
+                }
+            }.sum()
+    }
+}
+
+fun day10_2() {
+    var adaptorCodes = getResourceAsText("day10_input.txt").bufferedReader().readLines()
+        .map { it.toInt() }
+        .sorted()
+
+    val max = adaptorCodes.maxOrNull()!! + 3
+
+    val codes = adaptorCodes + max
+
+    val paths = possiblePaths(0, max, codes)
+
+    println("Found $paths possible")
 }
