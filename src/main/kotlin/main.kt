@@ -19,8 +19,10 @@ fun main(args: Array<String>) {
 //    day8_2()
 //    day9_1()
 //    day9_2()
-    day10_1()
-    day10_2()
+//    day10_1()
+//    day10_2()
+    day11_1()
+    day11_2()
 }
 
 fun getResourceAsText(path: String): InputStream {
@@ -636,4 +638,27 @@ fun day10_2() {
     val paths = possiblePaths(0, max, codes)
 
     println("Found $paths possible")
+}
+
+fun day11_1() {
+    val c = Conway.loadConway("day11_input.txt")
+
+    var changed = true
+    while(changed) {
+        changed = c.evolve()
+    }
+
+    println ("Occupied seats: ${c.occupiedNext()}")
+}
+
+fun day11_2() {
+    val c = Conway.loadConway("day11_input.txt")
+
+    var changed = true
+    while(changed) {
+        changed = c.evolveVisible()
+    }
+
+    println ("Occupied seats: ${c.occupiedNext()}")
+
 }
