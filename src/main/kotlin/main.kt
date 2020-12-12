@@ -1,4 +1,5 @@
 import java.io.InputStream
+import kotlin.math.absoluteValue
 
 fun main(args: Array<String>) {
 //    day1_1()
@@ -21,8 +22,10 @@ fun main(args: Array<String>) {
 //    day9_2()
 //    day10_1()
 //    day10_2()
-    day11_1()
-    day11_2()
+//    day11_1()
+//    day11_2()
+    day12_1()
+    day12_2()
 }
 
 fun getResourceAsText(path: String): InputStream {
@@ -661,4 +664,22 @@ fun day11_2() {
 
     println ("Occupied seats: ${c.occupiedNext()}")
 
+}
+
+fun day12_1() {
+    var directions = getResourceAsText("day12_input.txt").bufferedReader().readLines()
+        .map { Pair(it[0], it.substring(1).toInt()) }
+
+    val finalLocation = Ship().sail(Location( 0, 0, Direction.East), directions)
+
+    println ("Final location is $finalLocation, manhattan distance is ${finalLocation.manhattan()}")
+}
+
+fun day12_2() {
+    var directions = getResourceAsText("day12_input.txt").bufferedReader().readLines()
+        .map { Pair(it[0], it.substring(1).toInt()) }
+
+    val finalLocation = Ship().sailWithWaypoint( Location( 0, 0, Direction.East, Pair(10,1)), directions)
+
+    println ("Final location is $finalLocation, manhattan distance is ${finalLocation.manhattan()}")
 }
