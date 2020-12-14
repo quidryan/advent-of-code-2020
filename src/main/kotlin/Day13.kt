@@ -44,20 +44,48 @@ fun assertBus(busIds:String, expected:Long) {
             //throw IllegalStateException("We expected $expected but got $t for input $busIds")
         }
     }
-    println ("Searching $busIds took ${timeInMillis/1000} seconds" )
+    println ("Searching $busIds took $timeInMillis milliseconds" )
 }
+
 fun findSubsequent(busStrings: List<String>) : Long {
     val buses = busStrings
-        .mapIndexed { idx, busId -> (if(busId=="x") 1 else busId.toInt()) to idx}
+        .mapIndexed { idx, busId -> (if(busId=="x") -1 else busId.toInt()) to idx}
+        .filter { (bus, idx) -> bus != -1 }
+        .map { (bus, idx) -> bus to (bus - idx) % bus }
 
-    var t = 0L;
-    while(true) {
-        t++
-        val alignment = buses.all { (bus, idx) ->
-            (t+idx) % bus == 0L
-        }
-        if(alignment) {
-            return t
-        }
+    val n = buses.map { it.first }.toIntArray()
+    val a = buses.map { it.second }.toIntArray()
+    return chineseRemainder(n, a)
+}
+
+// Just copying from Rosetta stone
+
+/* returns x where (a * x) % b == 1 */
+fun multInv(a: Long, b: Long): Long {
+    if (b == 1L) return 1
+    var aa = a
+    var bb = b
+    var x0 = 0L
+    var x1 = 1L
+    while (aa > 1L) {
+        val q = aa / bb
+        var t = bb
+        bb = aa % bb
+        aa = t
+        t = x0
+        x0 = x1 - q * x0
+        x1 = t
     }
+    if (x1 < 0) x1 += b
+    return x1
+}
+
+fun chineseRemainder(n: IntArray, a: IntArray): Long {
+    val prod = n.fold(1L) { acc, i -> acc * i }
+    var sum = 0L
+    for (i in n.indices) {
+        val p = prod / n[i]
+        sum += a[i] * multInv(p, n[i].toLong()) * p
+    }
+    return sum % prod
 }
