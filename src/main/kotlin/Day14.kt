@@ -103,29 +103,22 @@ private fun executeV1(operations: List<Operation>): MemoryState {
 private fun executeV2(operations: List<Operation>): MemoryState {
     return operations.fold(MemoryState()) { state, operation ->
         when (operation) {
-            is Mask -> {
-                state.mask = operation
-            }
+            is Mask -> state.mask = operation
             is MemorySet -> {
-                val mask = state.mask ?: throw IllegalStateException("Can't apply mask if it's not set yet")
-                val base = operation.location or mask.onesMask
+                val masks = state.mask ?: throw IllegalStateException("Can't apply mask if it's not set yet")
+                val base = operation.location or masks.onesMask
 
                 // Find floating addresses
-                var variations = (0 until 36)
-                    .filter {
-                        mask.floatMask shr it and 1L == 1L
-                    }
+                (0 until 36)
+                    .filter {  masks.floatMask shr it and 1L == 1L }
                     .fold(listOf(base)) { candidates, position ->
                         candidates.flatMap { candidate ->
-                            // At this location, we need to vary in two ways
+                            // At this location, we need to vary in two ways, which will double the candidates accumulator
                             val field = 1L shl position
                             listOf(candidate or field, candidate and field.inv())
                         }
                     }
-
-                variations.forEach { location ->
-                    state.memory[location] = operation.value
-                }
+                    .forEach { state.memory[it] = operation.value }
             }
         }
         state
